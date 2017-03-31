@@ -2,6 +2,8 @@ require 'sinatra'
 require 'json'
 require 'octokit'
 
+'Test'
+
 post '/' do
   client = Octokit::Client.new(
     client_id: ENV['CLIENT_ID'],
