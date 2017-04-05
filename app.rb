@@ -3,6 +3,8 @@ require 'json'
 require 'octokit'
 require 'tracker_api'
 
+'Test'
+
 # TODO: add project id to url
 post '/github/:pivotal_project_id' do
   pivotal_client = TrackerApi::Client.new(token: ENV['PIVOTAL_ACCESS_TOKEN'])
