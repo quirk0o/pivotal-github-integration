@@ -4,7 +4,7 @@ require 'octokit'
 require 'tracker_api'
 
 # TODO: add project id to url
-post '/github' do
+post '/github/:pivotal_project_id' do
   pivotal_client = TrackerApi::Client.new(token: ENV['PIVOTAL_ACCESS_TOKEN'])
   github_client = Octokit::Client.new(
     access_token: ENV['ACCESS_TOKEN']
@@ -15,7 +15,7 @@ post '/github' do
   pr_number = payload['number']
   story_id = payload['pull_request']['title'].match(/(?<=#)\d+(?=\s)/).to_s
 
-  project = pivotal_client.project(1999363)
+  project = pivotal_client.project(params['pivotal_project_id'])
   story = project.story(story_id)
   story_accepted = story.current_state == 'accepted'
   state = story_accepted ? 'success' : 'failure'
