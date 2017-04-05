@@ -13,7 +13,7 @@ post '/github' do
   payload = JSON.parse(request.body.read)
   puts payload
   pr_number = payload['number']
-  story_id = payload['title'].match(/(?<=#)\d+(?=\s)/).to_s
+  story_id = payload['pull_request']['title'].match(/(?<=#)\d+(?=\s)/).to_s
 
   project = pivotal_client.project(1999363)
   story = project.story(story_id)
@@ -23,7 +23,7 @@ post '/github' do
   commits = github_client.pull_request_commits('quirk0o/pivotal-github-integration', pr_number)
   sha = commits.last.sha
   options = {
-    target_url: pivotal_project_url,
+    target_url: story.url,
     description: "Story was #{story_accepted  ? 'accepted' : 'rejected'}",
     context: 'continuous-integration/pivotal'
   }
