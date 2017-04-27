@@ -12,7 +12,7 @@ post '/github/:pivotal_project_id' do
     access_token: ENV['ACCESS_TOKEN']
   )
 
-  puts headers['X-GitHub-Event']
+  puts env['X-GitHub-Event']
 
   payload = JSON.parse(request.body.read)
   puts payload
