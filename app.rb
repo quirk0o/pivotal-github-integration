@@ -40,7 +40,7 @@ post '/github/:pivotal_project_id' do
     sha = payload['head_commit']['id']
     pull_request = github_client.pull_requests(repo, head: sha)[0]
 
-    puts pull_request
+    puts pull_request.title
 
   end
 
