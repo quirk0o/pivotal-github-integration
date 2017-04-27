@@ -3,8 +3,6 @@ require 'json'
 require 'octokit'
 require 'tracker_api'
 
-'Test'
-
 # TODO: add project id to url
 post '/github/:pivotal_project_id' do
   pivotal_client = TrackerApi::Client.new(token: ENV['PIVOTAL_ACCESS_TOKEN'])
@@ -16,32 +14,31 @@ post '/github/:pivotal_project_id' do
 
   payload = JSON.parse(request.body.read)
   repo = payload['repository']['full_name']
-  pr_number = payload['number']
 
-  if event_type == 'pull_request'
-    story_id = payload['pull_request']['title'].match(/(?<=#)\d+(?=\s)/).to_s
+  if event_type == 'pull_reguest' || event_type == 'push'
+    if event_type == 'pull_request'
+      pull_request = payload['pull_request']
+      pull_request_title = pull_request['title']
+      sha = pull_request['head']['sha']
+    elsif event_type == 'push'
+      sha = payload['head_commit']['id']
+      pull_request = github_client.pull_requests(repo, head: sha)[0]
+      pull_request_title = pull_request.title
+    end
+
+    story_id = pull_request_title.match(/(?<=#)\d+(?=\s)/).to_s
 
     project = pivotal_client.project(params['pivotal_project_id'])
     story = project.story(story_id)
     story_accepted = story.current_state == 'accepted'
     state = story_accepted ? 'success' : 'failure'
 
-    # TODO: use payload['head']
-    commits = github_client.pull_request_commits(repo, pr_number)
-    sha = commits.last.sha
     options = {
       target_url: story.url,
       description: "Story was #{story_accepted ? '' : 'not'} accepted",
       context: 'continuous-integration/pivotal'
     }
     github_client.create_status(repo, sha, state, options)
-
-  elsif event_type == 'push'
-    sha = payload['head_commit']['id']
-    pull_request = github_client.pull_requests(repo, head: sha)[0]
-
-    puts pull_request.title
-
   end
 
   status :ok
