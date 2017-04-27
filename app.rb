@@ -12,6 +12,8 @@ post '/github/:pivotal_project_id' do
     access_token: ENV['ACCESS_TOKEN']
   )
 
+  puts headers['X-GitHub-Event']
+
   payload = JSON.parse(request.body.read)
   puts payload
   repo = payload['repository']['full_name']
