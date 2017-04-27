@@ -14,7 +14,7 @@ post '/github/:pivotal_project_id' do
   payload = JSON.parse(request.body.read)
   repo = payload['repository']['full_name']
 
-  if event_type == 'pull_reguest' || event_type == 'push'
+  if event_type == 'pull_request' || event_type == 'push'
     if event_type == 'pull_request'
       pull_request = payload['pull_request']
       pull_request_title = pull_request['title']
