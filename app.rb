@@ -12,28 +12,37 @@ post '/github/:pivotal_project_id' do
     access_token: ENV['ACCESS_TOKEN']
   )
 
-  puts env['X-GitHub-Event']
+  event_type = env['HTTP_X_GITHUB_EVENT']
 
   payload = JSON.parse(request.body.read)
-  puts payload
   repo = payload['repository']['full_name']
   pr_number = payload['number']
-  story_id = payload['pull_request']['title'].match(/(?<=#)\d+(?=\s)/).to_s
 
-  project = pivotal_client.project(params['pivotal_project_id'])
-  story = project.story(story_id)
-  story_accepted = story.current_state == 'accepted'
-  state = story_accepted ? 'success' : 'failure'
+  if event_type == 'pull_request'
+    story_id = payload['pull_request']['title'].match(/(?<=#)\d+(?=\s)/).to_s
 
-  # TODO: use payload['head']
-  commits = github_client.pull_request_commits(repo, pr_number)
-  sha = commits.last.sha
-  options = {
-    target_url: story.url,
-    description: "Story was #{story_accepted  ? '' : 'not'} accepted",
-    context: 'continuous-integration/pivotal'
-  }
-  github_client.create_status(repo, sha, state, options)
+    project = pivotal_client.project(params['pivotal_project_id'])
+    story = project.story(story_id)
+    story_accepted = story.current_state == 'accepted'
+    state = story_accepted ? 'success' : 'failure'
+
+    # TODO: use payload['head']
+    commits = github_client.pull_request_commits(repo, pr_number)
+    sha = commits.last.sha
+    options = {
+      target_url: story.url,
+      description: "Story was #{story_accepted ? '' : 'not'} accepted",
+      context: 'continuous-integration/pivotal'
+    }
+    github_client.create_status(repo, sha, state, options)
+
+  elsif event_type == 'push'
+    sha = payload['head_commit']['id']
+    pull_request = github_client.pull_requests(repo, head: sha)[0]
+
+    puts pull_request
+
+  end
 
   status :ok
   body ''
